@@ -1,4 +1,4 @@
-import type { CreateUserInput, UpdateUserInput, User } from "./types";
+import type { CreateUserInput, UpdateUserInput, User } from './types';
 
 export interface UserRepository {
   list(): Promise<User[]>;

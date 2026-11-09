@@ -1,4 +1,4 @@
-import type { Agency, CreateAgencyInput, UpdateAgencyInput } from "./types";
+import type { Agency, CreateAgencyInput, UpdateAgencyInput } from './types';
 
 export interface AgencyRepository {
   list(): Promise<Agency[]>;

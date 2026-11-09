@@ -61,15 +61,26 @@ Open [http://localhost:3000](http://localhost:3000). The root route redirects to
 
 ## Available scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start the local development server |
-| `npm run build` | Create an optimized production build |
-| `npm run start` | Serve the production build |
-| `npm run lint` | Run ESLint with zero warnings allowed |
-| `npm run typecheck` | Run strict TypeScript checking without emitting files |
+| Command                | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `npm run dev`          | Start the local development server                           |
+| `npm run build`        | Create an optimized production build                         |
+| `npm run start`        | Serve the production build                                   |
+| `npm run format`       | Format supported repository files with Prettier              |
+| `npm run format:check` | Verify that supported files match the Prettier configuration |
+| `npm run lint`         | Run ESLint with zero warnings allowed                        |
+| `npm run typecheck`    | Run strict TypeScript checking without emitting files        |
 
-Run the validation suite with `npm run lint`, `npm run typecheck`, and `npm run build`. There is not yet an automated browser or unit-test suite; CRUD flows are structured for future component and integration coverage.
+Run the validation suite with `npm run format:check`, `npm run lint`, `npm run typecheck`, and
+`npm run build`. There is not yet an automated browser or unit-test suite; CRUD flows are
+structured for future component and integration coverage.
+
+### Editor formatting
+
+The repository includes shared VS Code settings that use the Prettier extension as the default
+formatter, format supported files on save, and apply ESLint fixes on save. Install the
+`esbenp.prettier-vscode` and `dbaeumer.vscode-eslint` extensions to use this automation. Prettier
+also sorts Tailwind CSS classes through `prettier-plugin-tailwindcss`.
 
 ## Mock-data limitations
 
