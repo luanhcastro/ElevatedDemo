@@ -61,3 +61,5 @@ All notable project changes are recorded by completed GitHub issue. This format 
 ## #3 — Implement Supabase authentication and role-based access control
 
 ## #4 — Supabase-backed Agency and User Management (MVP)
+
+## #5 — Final Fixes, Validation & Deployment

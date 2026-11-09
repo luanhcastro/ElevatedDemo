@@ -27,7 +27,7 @@ export function AgencyFormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   agency?: Agency;
-  onSubmit: (values: AgencyFormValues) => Promise<void>;
+  onSubmit: (values: AgencyFormValues) => Promise<boolean>;
 }) {
   const form = useForm<AgencyFormValues>({
     resolver: zodResolver(agencySchema),
@@ -38,8 +38,7 @@ export function AgencyFormDialog({
       form.reset(agency ? { name: agency.name, email: agency.email } : { name: '', email: '' });
   }, [agency, form, open]);
   const submit = form.handleSubmit(async (values) => {
-    await onSubmit(values);
-    onOpenChange(false);
+    if (await onSubmit(values)) onOpenChange(false);
   });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +54,6 @@ export function AgencyFormDialog({
             <Label htmlFor="agency-name">Agency name</Label>
             <Input
               id="agency-name"
-              placeholder="Acme Studio"
               autoComplete="organization"
               aria-invalid={Boolean(form.formState.errors.name)}
               {...form.register('name')}
@@ -69,7 +67,6 @@ export function AgencyFormDialog({
             <Input
               id="agency-email"
               type="email"
-              placeholder="team@acme.example"
               autoComplete="email"
               aria-invalid={Boolean(form.formState.errors.email)}
               {...form.register('email')}

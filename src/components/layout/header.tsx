@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, LogOut, Menu, Settings, UserRound } from 'lucide-react';
+import { ChevronDown, LogOut, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Brand } from '@/components/shared/brand';
@@ -23,6 +23,13 @@ const titles: Record<string, { title: string; description: string }> = {
   '/agencies': { title: 'Agencies', description: 'Manage organizations across the platform.' },
   '/users': { title: 'Users', description: 'Manage people and their workspace access.' },
 };
+
+function getPage(pathname: string) {
+  if (pathname.startsWith('/agencies/') && pathname.endsWith('/users')) {
+    return { title: 'Agency users', description: 'Review users assigned to an organization.' };
+  }
+  return titles[pathname] ?? titles['/dashboard'];
+}
 
 const roleLabels: Record<AccountRole, string> = {
   platform_admin: 'Platform administrator',
@@ -52,7 +59,7 @@ export function Header({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const page = titles[pathname] ?? titles['/dashboard'];
+  const page = getPage(pathname);
   return (
     <>
       <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
@@ -96,15 +103,6 @@ export function Header({
                   {email}
                 </span>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <UserRound className="mr-2 h-4 w-4" />
-                Profile placeholder
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings placeholder
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem asChild>

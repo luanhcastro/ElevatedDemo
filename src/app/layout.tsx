@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'ElevatedDemo', template: '%s | ElevatedDemo' },
-  description: 'A polished agency management workspace demo.',
+  description: 'Secure multi-tenant agency and user management.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

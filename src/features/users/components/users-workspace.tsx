@@ -16,12 +16,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import { createAgencyUser, listAgencyUsers } from '../actions';
+import {
+  createAgencyUser,
+  listAgencyUsers,
+  listAgencyUsersForPlatformAdministrator,
+} from '../actions';
+import type { Agency } from '@/features/agencies/types';
 import type { CreateUserFormValues } from '../schemas';
 import type { User } from '../types';
 import { UserFormDialog } from './user-form-dialog';
 
-export function UsersWorkspace() {
+export function UsersWorkspace({ viewedAgency }: { viewedAgency?: Agency }) {
+  const readOnly = Boolean(viewedAgency);
   const [users, setUsers] = useState<User[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [query, setQuery] = useState('');
@@ -30,12 +36,16 @@ export function UsersWorkspace() {
   const load = useCallback(async () => {
     setState('loading');
     try {
-      setUsers(await listAgencyUsers());
+      setUsers(
+        viewedAgency
+          ? await listAgencyUsersForPlatformAdministrator(viewedAgency.id)
+          : await listAgencyUsers(),
+      );
       setState('ready');
     } catch {
       setState('error');
     }
-  }, []);
+  }, [viewedAgency]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -50,7 +60,7 @@ export function UsersWorkspace() {
     const result = await createAgencyUser(values);
     if (!result.ok) {
       toast({ title: 'User not created', description: result.message });
-      return;
+      return false;
     }
     const { user } = result;
     setUsers((current) => [user, ...current]);
@@ -58,20 +68,27 @@ export function UsersWorkspace() {
       title: 'User created',
       description: `${user.name} can now sign in to ${user.agencyName}.`,
     });
+    return true;
   }
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">People directory</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {viewedAgency ? `${viewedAgency.name} users` : 'People directory'}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage users in your agency workspace.
+            {readOnly
+              ? 'Review users assigned to this agency.'
+              : 'Manage users in your agency workspace.'}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Create user
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Create user
+          </Button>
+        )}
       </div>
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -97,10 +114,12 @@ export function UsersWorkspace() {
             description={
               query
                 ? 'Try a different name, email, or agency.'
-                : 'Create the first user in this workspace.'
+                : readOnly
+                  ? 'No users are assigned to this agency.'
+                  : 'Create the first user in this workspace.'
             }
             action={
-              !query ? (
+              !query && !readOnly ? (
                 <Button onClick={() => setCreateOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Create user
@@ -152,7 +171,9 @@ export function UsersWorkspace() {
           </Table>
         )}
       </Card>
-      <UserFormDialog open={createOpen} onOpenChange={setCreateOpen} onSubmit={create} />
+      {!readOnly && (
+        <UserFormDialog open={createOpen} onOpenChange={setCreateOpen} onSubmit={create} />
+      )}
     </div>
   );
 }

@@ -1,68 +1,53 @@
-import { ArrowUpRight, Building2, CheckCircle2, Clock3, UserPlus, UsersRound } from 'lucide-react';
+import { ArrowUpRight, Building2, UsersRound } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockAgencies, mockUsers } from '@/lib/mock/data';
+import { Card, CardContent } from '@/components/ui/card';
+import type { AuthorizationContext } from '@/features/auth/types';
+import type { DashboardData } from '../data';
 
-const activities = [
-  {
-    icon: UserPlus,
-    title: 'Maya Chen joined Northstar Creative',
-    detail: 'User added',
-    time: '3 hours ago',
-    color: 'bg-violet-50 text-violet-600',
-  },
-  {
-    icon: Building2,
-    title: 'Summit Digital was created',
-    detail: 'Agency added',
-    time: 'Yesterday',
-    color: 'bg-blue-50 text-blue-600',
-  },
-  {
-    icon: CheckCircle2,
-    title: 'Meridian Partners profile updated',
-    detail: 'Agency updated',
-    time: '2 days ago',
-    color: 'bg-emerald-50 text-emerald-600',
-  },
-  {
-    icon: UsersRound,
-    title: 'Jordan Ellis profile updated',
-    detail: 'User updated',
-    time: '4 days ago',
-    color: 'bg-amber-50 text-amber-600',
-  },
-];
-
-export function DashboardOverview() {
+export function DashboardOverview({
+  account,
+  data,
+}: {
+  account: AuthorizationContext;
+  data: DashboardData;
+}) {
   const stats = [
     {
-      label: 'Total agencies',
-      value: mockAgencies.length,
-      note: `${mockAgencies.filter((item) => item.status === 'active').length} currently active`,
+      label: account.role === 'platform_admin' ? 'Active agencies' : 'Your agency',
+      value: data.agencyCount,
+      note:
+        account.role === 'platform_admin'
+          ? 'Organizations currently able to operate'
+          : (account.agency?.name ?? 'No active agency'),
       icon: Building2,
-      href: '/agencies',
+      href: account.role === 'platform_admin' ? '/agencies' : undefined,
       color: 'bg-blue-50 text-blue-600',
     },
     {
       label: 'Total users',
-      value: mockUsers.length,
-      note: `${mockUsers.filter((item) => item.status === 'active').length} currently active`,
+      value: data.userCount,
+      note:
+        account.role === 'platform_admin'
+          ? 'Users assigned across all agencies'
+          : 'Users assigned to your agency',
       icon: UsersRound,
-      href: '/users',
+      href: account.role === 'agency_admin' ? '/users' : undefined,
       color: 'bg-violet-50 text-violet-600',
     },
   ];
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <section>
         <div className="mb-5">
-          <h2 className="text-2xl font-semibold tracking-tight">Welcome back, Alex</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Welcome back, {account.displayName}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Here&apos;s what&apos;s happening across your demo workspace.
+            Current data from your authorized workspace.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           {stats.map((stat) => (
             <Card key={stat.label} className="group">
               <CardContent className="p-6">
@@ -70,80 +55,28 @@ export function DashboardOverview() {
                   <span className={`rounded-xl p-3 ${stat.color}`}>
                     <stat.icon className="h-5 w-5" />
                   </span>
-                  <Link
-                    href={stat.href}
-                    className="rounded-md p-1 text-muted-foreground opacity-60 transition group-hover:opacity-100"
-                    aria-label={`View ${stat.label}`}
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
+                  {stat.href && (
+                    <Link
+                      href={stat.href}
+                      className="rounded-md p-1 text-muted-foreground opacity-60 transition group-hover:opacity-100"
+                      aria-label={`View ${stat.label}`}
+                    >
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  )}
                 </div>
-                <p className="mt-5 text-3xl font-semibold tracking-tight">{stat.value}</p>
+                <p className="mt-5 text-3xl font-semibold tracking-tight">
+                  {stat.value ?? 'Unavailable'}
+                </p>
                 <p className="mt-1 text-sm font-medium">{stat.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{stat.note}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {stat.value === null ? 'Database metric could not be loaded' : stat.note}
+                </p>
               </CardContent>
             </Card>
           ))}
         </div>
       </section>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent activity</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                The latest changes in your demo workspace.
-              </p>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y">
-              {activities.map((activity) => (
-                <div
-                  key={activity.title}
-                  className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
-                >
-                  <span className={`mt-0.5 rounded-lg p-2.5 ${activity.color}`}>
-                    <activity.icon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{activity.title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{activity.detail}</p>
-                  </div>
-                  <span className="whitespace-nowrap text-xs text-muted-foreground">
-                    {activity.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Workspace status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-lg bg-emerald-50 p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
-                <CheckCircle2 className="h-4 w-4" />
-                Demo ready
-              </div>
-              <p className="mt-2 text-xs leading-5 text-emerald-700">
-                All mock services are available in this browser session.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <Clock3 className="mt-0.5 h-4 w-4 text-slate-400" />
-              <div>
-                <p className="text-sm font-medium">In-memory data</p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Changes reset when the application reloads. No backend is connected.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

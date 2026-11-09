@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(33);
+select extensions.plan(35);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -46,6 +46,18 @@ select extensions.is(
   (select count(*) from public.agencies),
   2::bigint,
   'platform administrators can view every agency'
+);
+
+select extensions.is(
+  (select count(*) from public.profiles),
+  7::bigint,
+  'platform administrators can view profiles across agencies'
+);
+
+select extensions.is(
+  (select count(*) from public.agency_memberships),
+  4::bigint,
+  'platform administrators can view memberships across agencies'
 );
 
 select extensions.results_eq(
