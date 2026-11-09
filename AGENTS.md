@@ -17,6 +17,8 @@ The project prioritizes security, maintainability, clean architecture, and engin
 - Zod
 - Supabase Auth
 - PostgreSQL with Row Level Security (RLS)
+- React Hook Form for accessible form state
+- Lucide React for interface icons
 
 Supabase integration will be introduced in later issues.
 
@@ -98,8 +100,8 @@ Never claim tests passed unless they were actually run.
 
 - Keep README.md updated with the current project state.
 - After completing each GitHub issue, append its number and title to CHANGELOG.md.
-- Keep CHANGELOG.md as a simple chronological list of completed tasks.
-- Do not add descriptions, technical details, or test results to the changelog.
+- Keep CHANGELOG.md chronological and preserve all previous issue entries.
+- Record only checks that were actually executed and their real outcomes.
 - Never mark an incomplete issue as completed.
 
 
