@@ -74,6 +74,12 @@ These rules apply when backend integration is introduced:
 - Prevent cross-tenant data access and privilege escalation.
 - Never log credentials or sensitive tokens.
 - Do not commit secrets or real environment files.
+- Verify server-side identity with `supabase.auth.getUser()` before making authorization decisions.
+- Use middleware only to refresh cookie-backed sessions; enforce route authorization again in
+  Server Components, server actions, or route handlers.
+- Resolve roles and agency context from trusted database records, never browser state, user
+  metadata, or client-provided identifiers.
+- Fail closed when authorization records are missing, inconsistent, inactive, or unavailable.
 
 ## Multi-Tenancy
 

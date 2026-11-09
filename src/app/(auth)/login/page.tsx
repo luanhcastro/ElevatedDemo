@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import { ShieldCheck } from 'lucide-react';
+import { redirect } from 'next/navigation';
 import { Brand } from '@/components/shared/brand';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { decideRouteAccess } from '@/features/auth/authorization-policy';
+import { getAuthorizationContext } from '@/features/auth/authorization';
 import { LoginForm } from '@/features/auth/components/login-form';
 
 export const metadata: Metadata = { title: 'Sign in' };
-export default function LoginPage() {
+export default async function LoginPage() {
+  const context = await getAuthorizationContext();
+  const decision = decideRouteAccess('/login', context);
+  if (decision === 'redirect-dashboard') redirect('/dashboard');
+  if (decision === 'deny') redirect('/access-denied');
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-12">
       <div className="absolute inset-y-0 left-0 hidden w-[42%] bg-sidebar lg:block">
@@ -31,7 +39,7 @@ export default function LoginPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <ShieldCheck className="h-4 w-4" />
-            UI demonstration · no authentication enabled
+            Secure access · administrators only
           </div>
         </div>
       </div>
@@ -43,20 +51,19 @@ export default function LoginPage() {
           <CardHeader className="space-y-2 p-7 pb-5">
             <CardTitle className="text-2xl">Welcome to ElevatedDemo</CardTitle>
             <CardDescription>
-              Use the prefilled values or enter any valid email and password to explore the
-              interface.
+              Sign in with the email and password issued by your platform administrator.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-7 pt-0">
-            <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
-              <strong>Demo behavior:</strong> this form only validates in your browser. It does not
-              authenticate, store, or send credentials.
+            <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
+              Access is limited to platform and agency administrators. Public registration is not
+              available.
             </div>
             <LoginForm />
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Issue #1 application shell · Mock data only
+          Authentication by Supabase · Management data remains mocked
         </p>
       </div>
     </main>

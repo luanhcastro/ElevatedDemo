@@ -3,19 +3,25 @@
 import { Building2, LayoutDashboard, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { canAccessRoute } from '@/features/auth/authorization-policy';
+import type { AccountRole, ProtectedRoute } from '@/features/auth/types';
 import { cn } from '@/lib/utils';
 
 export const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Agencies', href: '/agencies', icon: Building2 },
   { name: 'Users', href: '/users', icon: UsersRound },
-];
+] satisfies { name: string; href: ProtectedRoute; icon: typeof LayoutDashboard }[];
 
-export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+export function getNavigationForRole(role: AccountRole) {
+  return navigation.filter((item) => canAccessRoute(role, item.href));
+}
+
+export function Navigation({ role, onNavigate }: { role: AccountRole; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Main navigation" className="space-y-1">
-      {navigation.map((item) => {
+      {getNavigationForRole(role).map((item) => {
         const active = pathname === item.href;
         return (
           <Link

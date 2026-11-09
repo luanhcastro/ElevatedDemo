@@ -14,6 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { logout } from '@/features/auth/actions';
+import type { AccountRole } from '@/features/auth/types';
 import { Navigation } from './navigation';
 
 const titles: Record<string, { title: string; description: string }> = {
@@ -22,7 +24,32 @@ const titles: Record<string, { title: string; description: string }> = {
   '/users': { title: 'Users', description: 'Manage people and their workspace access.' },
 };
 
-export function Header() {
+const roleLabels: Record<AccountRole, string> = {
+  platform_admin: 'Platform administrator',
+  agency_admin: 'Agency administrator',
+  member: 'Member',
+  none: 'No administrative role',
+};
+
+function getInitials(name: string) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+  return initials || 'U';
+}
+
+export function Header({
+  displayName,
+  email,
+  role,
+}: {
+  displayName: string;
+  email: string;
+  role: AccountRole;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const page = titles[pathname] ?? titles['/dashboard'];
@@ -49,19 +76,26 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-11 gap-3 px-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
-                  AD
+                  {getInitials(displayName)}
                 </span>
                 <span className="hidden text-left md:block">
-                  <span className="block text-sm font-medium leading-4">Alex Demo</span>
+                  <span className="block max-w-40 truncate text-sm font-medium leading-4">
+                    {displayName}
+                  </span>
                   <span className="block text-xs font-normal text-muted-foreground">
-                    Platform admin
+                    {roleLabels[role]}
                   </span>
                 </span>
                 <ChevronDown className="hidden h-4 w-4 text-muted-foreground md:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Demo account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <span className="block">{displayName}</span>
+                <span className="block max-w-52 truncate text-xs font-normal text-muted-foreground">
+                  {email}
+                </span>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <UserRound className="mr-2 h-4 w-4" />
@@ -72,10 +106,14 @@ export function Header() {
                 Settings placeholder
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-muted-foreground">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out unavailable
-              </DropdownMenuItem>
+              <form action={logout}>
+                <DropdownMenuItem asChild>
+                  <button type="submit" className="w-full text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </button>
+                </DropdownMenuItem>
+              </form>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -87,10 +125,10 @@ export function Header() {
             <Brand dark />
           </div>
           <div className="p-4">
-            <Navigation onNavigate={() => setMobileOpen(false)} />
+            <Navigation role={role} onNavigate={() => setMobileOpen(false)} />
           </div>
           <p className="absolute bottom-6 px-7 text-xs leading-5 text-slate-400">
-            Demo mode · changes are not persisted
+            Signed in as {roleLabels[role].toLowerCase()}
           </p>
         </DialogContent>
       </Dialog>

@@ -8,24 +8,29 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/toast';
+import { createClient } from '@/lib/supabase/client';
+import { authenticateWithPassword } from '../auth-service';
 import { loginSchema, type LoginFormValues } from '../schemas';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: 'demo@elevated.example', password: 'demo-password' },
+    defaultValues: { email: '', password: '' },
   });
-  async function submit() {
-    await new Promise((resolve) => setTimeout(resolve, 650));
-    toast({
-      title: 'Demo sign-in complete',
-      description: 'No credentials were sent or authenticated.',
-    });
-    router.push('/dashboard');
+
+  async function submit(values: LoginFormValues) {
+    const supabase = createClient();
+    const result = await authenticateWithPassword(supabase.auth, values);
+
+    if (!result.ok) {
+      form.setError('root', { message: result.message });
+      return;
+    }
+
+    router.replace('/dashboard');
+    router.refresh();
   }
   return (
     <form onSubmit={form.handleSubmit(submit)} className="space-y-5" noValidate>
@@ -75,8 +80,13 @@ export function LoginForm() {
       </div>
       <Button className="w-full" type="submit" disabled={form.formState.isSubmitting}>
         {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-        {form.formState.isSubmitting ? 'Entering demo...' : 'Continue to demo'}
+        {form.formState.isSubmitting ? 'Signing in...' : 'Sign in'}
       </Button>
+      {form.formState.errors.root?.message && (
+        <p className="text-center text-sm text-red-600" role="alert">
+          {form.formState.errors.root.message}
+        </p>
+      )}
     </form>
   );
 }
