@@ -57,6 +57,7 @@ export function createMockUserRepository(seed: User[] = mockUsers): UserReposito
         name: input.name,
         email: input.email,
         agencyName: 'Northstar Creative',
+        role: input.role,
         status: 'active',
         createdAt: new Date().toISOString(),
       };

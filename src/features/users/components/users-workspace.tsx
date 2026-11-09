@@ -1,18 +1,11 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Plus, Search, UserRound, UserX } from 'lucide-react';
+import { Plus, Search, UserRound } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/page-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -23,25 +16,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import { createMockUserRepository } from '@/lib/mock/repositories';
-import type { CreateUserFormValues, UpdateUserFormValues } from '../schemas';
+import { createAgencyUser, listAgencyUsers } from '../actions';
+import type { CreateUserFormValues } from '../schemas';
 import type { User } from '../types';
 import { UserFormDialog } from './user-form-dialog';
-
-const repository = createMockUserRepository();
 
 export function UsersWorkspace() {
   const [users, setUsers] = useState<User[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<User>();
-  const [deactivating, setDeactivating] = useState<User>();
   const { toast } = useToast();
   const load = useCallback(async () => {
     setState('loading');
     try {
-      setUsers(await repository.list());
+      setUsers(await listAgencyUsers());
       setState('ready');
     } catch {
       setState('error');
@@ -57,28 +46,18 @@ export function UsersWorkspace() {
       ),
     [query, users],
   );
-  async function create(values: CreateUserFormValues | UpdateUserFormValues) {
-    if (!('password' in values)) return;
-    const user = await repository.create(values);
+  async function create(values: CreateUserFormValues) {
+    const result = await createAgencyUser(values);
+    if (!result.ok) {
+      toast({ title: 'User not created', description: result.message });
+      return;
+    }
+    const { user } = result;
     setUsers((current) => [user, ...current]);
     toast({
       title: 'User created',
-      description: `${user.name} was added without retaining the demo password.`,
+      description: `${user.name} can now sign in to ${user.agencyName}.`,
     });
-  }
-  async function update(values: CreateUserFormValues | UpdateUserFormValues) {
-    if (!editing) return;
-    const user = await repository.update(editing.id, { name: values.name, email: values.email });
-    setUsers((current) => current.map((item) => (item.id === user.id ? user : item)));
-    toast({ title: 'User updated', description: `${user.name} is up to date.` });
-    setEditing(undefined);
-  }
-  async function deactivate() {
-    if (!deactivating) return;
-    const user = await repository.deactivate(deactivating.id);
-    setUsers((current) => current.map((item) => (item.id === user.id ? user : item)));
-    toast({ title: 'User deactivated', description: `${user.name} is now inactive.` });
-    setDeactivating(undefined);
   }
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -86,7 +65,7 @@ export function UsersWorkspace() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">People directory</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage demo users across agency workspaces.
+            Manage users in your agency workspace.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -135,10 +114,8 @@ export function UsersWorkspace() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead className="hidden md:table-cell">Agency</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-16">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,34 +138,13 @@ export function UsersWorkspace() {
                   <TableCell className="hidden text-muted-foreground md:table-cell">
                     {user.agencyName}
                   </TableCell>
+                  <TableCell className="capitalize text-muted-foreground">
+                    {user.role.replace('_', ' ')}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                       {user.status === 'active' ? 'Active' : 'Inactive'}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={`Actions for ${user.name}`}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditing(user)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit user
-                        </DropdownMenuItem>
-                        {user.status === 'active' && (
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onSelect={() => setDeactivating(user)}
-                          >
-                            <UserX className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -197,23 +153,6 @@ export function UsersWorkspace() {
         )}
       </Card>
       <UserFormDialog open={createOpen} onOpenChange={setCreateOpen} onSubmit={create} />
-      <UserFormDialog
-        open={Boolean(editing)}
-        onOpenChange={(open) => {
-          if (!open) setEditing(undefined);
-        }}
-        user={editing}
-        onSubmit={update}
-      />
-      <ConfirmDialog
-        open={Boolean(deactivating)}
-        onOpenChange={(open) => {
-          if (!open) setDeactivating(undefined);
-        }}
-        title={`Deactivate ${deactivating?.name ?? 'user'}?`}
-        description="The user will remain visible but will be marked inactive. No real account or access is changed."
-        onConfirm={deactivate}
-      />
     </div>
   );
 }

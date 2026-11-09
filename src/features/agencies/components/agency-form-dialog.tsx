@@ -47,9 +47,7 @@ export function AgencyFormDialog({
         <DialogHeader>
           <DialogTitle>{agency ? 'Edit agency' : 'Create agency'}</DialogTitle>
           <DialogDescription>
-            {agency
-              ? 'Update the organization’s contact details.'
-              : 'Add a new organization to this demo workspace.'}
+            {agency ? 'Update the organization’s contact details.' : 'Add a new organization.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -80,9 +78,6 @@ export function AgencyFormDialog({
               <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
             )}
           </div>
-          <p className="rounded-md bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
-            Demo only: changes are held in memory and are not sent to a server.
-          </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
