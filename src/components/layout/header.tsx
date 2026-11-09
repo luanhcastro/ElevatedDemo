@@ -1,8 +1,8 @@
 'use client';
 
 import { ChevronDown, LogOut, Menu } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
 import { Brand } from '@/components/shared/brand';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { logout } from '@/features/auth/actions';
 import type { AccountRole } from '@/features/auth/types';
+import { useToast } from '@/components/ui/toast';
 import { Navigation } from './navigation';
 
 const titles: Record<string, { title: string; description: string }> = {
@@ -58,8 +59,24 @@ export function Header({
   role: AccountRole;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSigningOut, startSignOut] = useTransition();
   const page = getPage(pathname);
+
+  function handleSignOut() {
+    startSignOut(async () => {
+      const result = await logout();
+      if (!result.ok) {
+        toast({ title: 'Sign out failed', description: result.message });
+        return;
+      }
+
+      router.replace('/login');
+      router.refresh();
+    });
+  }
   return (
     <>
       <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
@@ -104,14 +121,17 @@ export function Header({
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <form action={logout}>
-                <DropdownMenuItem asChild>
-                  <button type="submit" className="w-full text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </button>
-                </DropdownMenuItem>
-              </form>
+              <DropdownMenuItem
+                className="text-red-600"
+                disabled={isSigningOut}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  handleSignOut();
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {isSigningOut ? 'Signing out...' : 'Sign out'}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

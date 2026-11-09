@@ -3,12 +3,17 @@ import { redirect } from 'next/navigation';
 import { Brand } from '@/components/shared/brand';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { logout } from '@/features/auth/actions';
+import { logoutAndRedirect } from '@/features/auth/actions';
 import { getAuthorizationContext } from '@/features/auth/authorization';
 
-export default async function AccessDeniedPage() {
+export default async function AccessDeniedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ signOutError?: string }>;
+}) {
   const account = await getAuthorizationContext();
   if (!account) redirect('/login');
+  const { signOutError } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
@@ -31,7 +36,12 @@ export default async function AccessDeniedPage() {
             <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-600">
               Signed in as {account.email}
             </p>
-            <form action={logout}>
+            {signOutError && (
+              <p className="text-sm text-red-600" role="alert">
+                Unable to sign out. Please try again.
+              </p>
+            )}
+            <form action={logoutAndRedirect}>
               <Button type="submit" variant="outline" className="w-full">
                 Sign out
               </Button>
