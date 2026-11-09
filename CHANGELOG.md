@@ -59,3 +59,5 @@ All notable project changes are recorded by completed GitHub issue. This format 
 ## Issue #2 — Implement Supabase database schema and tenant isolation
 
 ## #3 — Implement Supabase authentication and role-based access control
+
+## #4 — Supabase-backed Agency and User Management (MVP)

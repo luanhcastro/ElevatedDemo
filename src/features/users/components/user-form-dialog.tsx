@@ -15,55 +15,39 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  createUserSchema,
-  updateUserSchema,
-  type CreateUserFormValues,
-  type UpdateUserFormValues,
-} from '../schemas';
-import type { User } from '../types';
+import { createUserSchema, type CreateUserFormValues } from '../schemas';
 
-type UserFormValues = CreateUserFormValues | UpdateUserFormValues;
 export function UserFormDialog({
   open,
   onOpenChange,
-  user,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user?: User;
-  onSubmit: (values: UserFormValues) => Promise<void>;
+  onSubmit: (values: CreateUserFormValues) => Promise<void>;
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  const editing = Boolean(user);
   const form = useForm<CreateUserFormValues>({
-    resolver: zodResolver(editing ? updateUserSchema : createUserSchema),
-    defaultValues: { name: '', email: '', password: '' },
+    resolver: zodResolver(createUserSchema),
+    defaultValues: { name: '', email: '', password: '', role: 'member' },
   });
   useEffect(() => {
     if (open) {
-      form.reset(
-        user
-          ? { name: user.name, email: user.email, password: '' }
-          : { name: '', email: '', password: '' },
-      );
+      form.reset({ name: '', email: '', password: '', role: 'member' });
       setShowPassword(false);
     }
-  }, [form, open, user]);
+  }, [form, open]);
   const submit = form.handleSubmit(async (values) => {
-    await onSubmit(editing ? { name: values.name, email: values.email } : values);
+    await onSubmit(values);
     onOpenChange(false);
   });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? 'Edit user' : 'Create user'}</DialogTitle>
+          <DialogTitle>Create user</DialogTitle>
           <DialogDescription>
-            {editing
-              ? 'Update profile details. Passwords are never displayed here.'
-              : 'Add a demo user. The password is validated, then immediately discarded.'}
+            Create a confirmed account in your agency. Passwords are never stored here.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -94,9 +78,20 @@ export function UserFormDialog({
               <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
             )}
           </div>
-          {!editing && (
+          <>
             <div className="space-y-2">
-              <Label htmlFor="user-password">Temporary demo password</Label>
+              <Label htmlFor="user-role">Role</Label>
+              <select
+                id="user-role"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                {...form.register('role')}
+              >
+                <option value="member">Member</option>
+                <option value="agency_admin">Agency administrator</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-password">Temporary password</Label>
               <div className="relative">
                 <Input
                   id="user-password"
@@ -119,17 +114,14 @@ export function UserFormDialog({
                 <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
               )}
             </div>
-          )}
-          <p className="rounded-md bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
-            Demo only: no account or credentials are created.
-          </p>
+          </>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? 'Save changes' : 'Create user'}
+              Create user
             </Button>
           </DialogFooter>
         </form>

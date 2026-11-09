@@ -13,6 +13,7 @@ export const createUserSchema = baseUserSchema.extend({
     .string()
     .min(8, 'Password must be at least 8 characters.')
     .max(72, 'Password must be 72 characters or fewer.'),
+  role: z.enum(['agency_admin', 'member']),
 });
 export const updateUserSchema = baseUserSchema;
 export type CreateUserFormValues = z.infer<typeof createUserSchema>;

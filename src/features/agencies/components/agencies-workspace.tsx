@@ -1,18 +1,11 @@
 'use client';
 
-import { Building2, MoreHorizontal, Pencil, Plus, Search, UserX } from 'lucide-react';
+import { Building2, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/page-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -23,25 +16,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import { createMockAgencyRepository } from '@/lib/mock/repositories';
+import { createAgency, listAgencies } from '../actions';
 import type { AgencyFormValues } from '../schemas';
 import type { Agency } from '../types';
 import { AgencyFormDialog } from './agency-form-dialog';
-
-const repository = createMockAgencyRepository();
 
 export function AgenciesWorkspace() {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<Agency>();
-  const [deactivating, setDeactivating] = useState<Agency>();
   const { toast } = useToast();
   const load = useCallback(async () => {
     setState('loading');
     try {
-      setAgencies(await repository.list());
+      setAgencies(await listAgencies());
       setState('ready');
     } catch {
       setState('error');
@@ -58,26 +47,17 @@ export function AgenciesWorkspace() {
     [agencies, query],
   );
   async function create(values: AgencyFormValues) {
-    const agency = await repository.create(values);
+    const result = await createAgency(values);
+    if (!result.ok) {
+      toast({ title: 'Agency not created', description: result.message });
+      return;
+    }
+    const { agency } = result;
     setAgencies((current) => [agency, ...current]);
     toast({
       title: 'Agency created',
-      description: `${agency.name} was added to the demo workspace.`,
+      description: `${agency.name} was added to the platform.`,
     });
-  }
-  async function update(values: AgencyFormValues) {
-    if (!editing) return;
-    const agency = await repository.update(editing.id, values);
-    setAgencies((current) => current.map((item) => (item.id === agency.id ? agency : item)));
-    toast({ title: 'Agency updated', description: `${agency.name} is up to date.` });
-    setEditing(undefined);
-  }
-  async function deactivate() {
-    if (!deactivating) return;
-    const agency = await repository.deactivate(deactivating.id);
-    setAgencies((current) => current.map((item) => (item.id === agency.id ? agency : item)));
-    toast({ title: 'Agency deactivated', description: `${agency.name} is now inactive.` });
-    setDeactivating(undefined);
   }
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -135,9 +115,6 @@ export function AgenciesWorkspace() {
                 <TableHead>Agency</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="w-16">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,34 +143,6 @@ export function AgenciesWorkspace() {
                       year: 'numeric',
                     }).format(new Date(agency.createdAt))}
                   </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Actions for ${agency.name}`}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditing(agency)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit agency
-                        </DropdownMenuItem>
-                        {agency.status === 'active' && (
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onSelect={() => setDeactivating(agency)}
-                          >
-                            <UserX className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -201,23 +150,6 @@ export function AgenciesWorkspace() {
         )}
       </Card>
       <AgencyFormDialog open={createOpen} onOpenChange={setCreateOpen} onSubmit={create} />
-      <AgencyFormDialog
-        open={Boolean(editing)}
-        onOpenChange={(open) => {
-          if (!open) setEditing(undefined);
-        }}
-        agency={editing}
-        onSubmit={update}
-      />
-      <ConfirmDialog
-        open={Boolean(deactivating)}
-        onOpenChange={(open) => {
-          if (!open) setDeactivating(undefined);
-        }}
-        title={`Deactivate ${deactivating?.name ?? 'agency'}?`}
-        description="The agency will remain visible but will be marked inactive. This demo does not enforce access restrictions."
-        onConfirm={deactivate}
-      />
     </div>
   );
 }
