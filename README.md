@@ -15,15 +15,19 @@ ElevatedDemo is a polished application-shell demo for a future secure, multi-ten
 ## Current functionality
 
 - Responsive application shell with desktop sidebar, mobile navigation, page headers, active states, and a user-menu placeholder
-- Demo login with email/password validation, password visibility control, loading feedback, and explicit non-authentication messaging
+- Supabase email/password authentication with cookie-backed SSR sessions and explicit error states
+- Server-side route authorization for platform and agency administrators
+- Role-aware desktop and mobile navigation with functional local-session logout
 - Dashboard summary cards, recent activity, and mock workspace status
 - Agency and user directories with search, create, edit, deactivate, confirmation dialogs, loading/error/empty states, and toast feedback
 - Accessible labels, focus treatment, dialogs, menus, status text, and responsive tables
 
-All mutations exist only in memory and reset on reload. User passwords are validated in the browser and immediately discarded; they are not logged, stored, or transmitted.
+Agency and user management mutations still exist only in memory and reset on reload. Credentials are
+sent directly to Supabase Auth over its client SDK and are never logged or stored in application
+tables.
 
-Issue #2 adds the database schema and tenant-isolation policies, but the frontend remains on mock
-repositories until a later integration issue.
+Issue #3 authenticates administrators and protects routes, while the CRUD repositories remain mock
+implementations until Issue #4.
 
 ## Architecture
 
@@ -34,15 +38,20 @@ src/
 ├── app/
 │   ├── (auth)/login/
 │   ├── (dashboard)/{dashboard,agencies,users}/
+│   ├── access-denied/
 │   ├── globals.css
 │   └── layout.tsx
 ├── components/{layout,shared,ui}/
 ├── features/
 │   ├── agencies/{components,repository.ts,schemas.ts,types.ts}
-│   ├── auth/{components,schemas.ts}
+│   ├── auth/{components,actions,authorization,schemas,types}
 │   ├── dashboard/components/
 │   └── users/{components,repository.ts,schemas.ts,types.ts}
-└── lib/mock/{data.ts,repositories.ts}
+├── lib/
+│   ├── mock/{data.ts,repositories.ts}
+│   └── supabase/{client,config,middleware,server}.ts
+└── types/database.ts
+middleware.ts
 supabase/
 ├── config.toml
 ├── migrations/
@@ -91,6 +100,34 @@ Recursive membership policies are avoided with narrowly scoped `security definer
 the non-exposed `private` schema. Each privileged function has an empty search path, uses fully
 qualified relations, and grants execution only to `authenticated` when RLS needs it.
 
+## Authentication and authorization
+
+The application uses `@supabase/ssr` for cookie-backed sessions. The browser client performs
+email/password sign-in, Next.js middleware refreshes expiring cookies, and Server Components call
+`supabase.auth.getUser()` to verify identity with Supabase Auth before rendering protected content.
+Middleware does not authorize routes by itself.
+
+Public signup and anonymous sign-in are disabled in the committed local Supabase configuration.
+Disable **Allow new users to sign up** and anonymous sign-ins in the hosted project's Auth settings
+as an operational prerequisite; the application exposes no signup endpoint or UI.
+
+Server authorization calls `public.get_my_authorization_context()`, a caller-scoped
+`security definer` function added in the Issue #3 migration. It reads only trusted profile,
+membership, agency, and platform-administrator records and returns only the current user's own
+context. It uses an empty search path, is unavailable to `anon`, and fails closed in the application
+when data is missing or inconsistent.
+
+| Route        | Unauthenticated   | Platform administrator | Agency administrator      | Member/no role |
+| ------------ | ----------------- | ---------------------- | ------------------------- | -------------- |
+| `/login`     | Allowed           | Redirect to dashboard  | Redirect to dashboard     | Access denied  |
+| `/dashboard` | Redirect to login | Allowed                | Allowed                   | Access denied  |
+| `/agencies`  | Redirect to login | Allowed                | Access denied             | Access denied  |
+| `/users`     | Redirect to login | Access denied          | Allowed for active agency | Access denied  |
+
+Soft-deleted agencies resolve with no agency-level access. Navigation follows the same role matrix
+for usability, but Server Component guards remain the authoritative application control and RLS
+remains the data-access control.
+
 ## Prerequisites
 
 - Node.js 18.18 or newer (Node.js 20 LTS is recommended)
@@ -106,7 +143,8 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The root route redirects to `/dashboard`; `/login` demonstrates the planned entry experience. No environment variables are required for Issue #1.
+Open [http://localhost:3000](http://localhost:3000). The root route redirects to the protected
+dashboard, and unauthenticated requests are redirected to `/login`.
 
 Copy the environment template for future local Supabase integration:
 
@@ -115,7 +153,7 @@ cp .env.example .env.local
 ```
 
 Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the existing project's
-API settings. These public values are not consumed by Issue #2 yet. Never put a secret key,
+API settings. These are the only variables used by the running application. Never put a secret key,
 service-role key, database password, or Supabase access token in a `NEXT_PUBLIC_*` variable.
 
 ### Local database development
@@ -154,19 +192,63 @@ command is required for normal local validation.
 
 ## Available scripts
 
-| Command                | Purpose                                                      |
-| ---------------------- | ------------------------------------------------------------ |
-| `npm run dev`          | Start the local development server                           |
-| `npm run build`        | Create an optimized production build                         |
-| `npm run start`        | Serve the production build                                   |
-| `npm run format`       | Format supported repository files with Prettier              |
-| `npm run format:check` | Verify that supported files match the Prettier configuration |
-| `npm run lint`         | Run ESLint with zero warnings allowed                        |
-| `npm run typecheck`    | Run strict TypeScript checking without emitting files        |
+| Command                            | Purpose                                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                      | Start the local development server                                   |
+| `npm run build`                    | Create an optimized production build                                 |
+| `npm run start`                    | Serve the production build                                           |
+| `npm test`                         | Run isolated authentication and authorization tests                  |
+| `npm run provision:platform-admin` | Provision the first administrator from trusted environment variables |
+| `npm run format`                   | Format supported repository files with Prettier                      |
+| `npm run format:check`             | Verify that supported files match the Prettier configuration         |
+| `npm run lint`                     | Run ESLint with zero warnings allowed                                |
+| `npm run typecheck`                | Run strict TypeScript checking without emitting files                |
 
-Run the validation suite with `npm run format:check`, `npm run lint`, `npm run typecheck`, and
-`npm run build`. There is not yet an automated browser or unit-test suite; CRUD flows are
-structured for future component and integration coverage.
+Run the validation suite with `npm test`, `npm run format:check`, `npm run lint`,
+`npm run typecheck`, and `npm run build`. Unit tests mock external Auth operations and verify
+application decisions; they do not replace pgTAP RLS tests or live Auth testing.
+
+## Initial platform administrator provisioning
+
+First apply the new authorization-context migration through the reviewed Supabase migration
+workflow. Then run the provisioning script only from a trusted administrator workstation. It uses
+the Auth Admin API with `email_confirm: true`, creates the matching profile and platform role, sends
+no email, and attempts to remove the Auth user if database provisioning fails.
+
+Prompt for sensitive values so they are not stored in shell history:
+
+```bash
+export SUPABASE_URL='https://your-project-ref.supabase.co'
+read -rsp 'Supabase secret key: ' SUPABASE_SECRET_KEY && echo
+read -rp 'Administrator email: ' INITIAL_PLATFORM_ADMIN_EMAIL
+read -rsp 'Initial password: ' INITIAL_PLATFORM_ADMIN_PASSWORD && echo
+read -rp 'Administrator name: ' INITIAL_PLATFORM_ADMIN_NAME
+export SUPABASE_SECRET_KEY INITIAL_PLATFORM_ADMIN_EMAIL
+export INITIAL_PLATFORM_ADMIN_PASSWORD INITIAL_PLATFORM_ADMIN_NAME
+
+npm run provision:platform-admin
+
+unset SUPABASE_SECRET_KEY INITIAL_PLATFORM_ADMIN_EMAIL
+unset INITIAL_PLATFORM_ADMIN_PASSWORD INITIAL_PLATFORM_ADMIN_NAME
+```
+
+The secret key must never use a `NEXT_PUBLIC_*` name, enter source control, or be deployed to the
+browser. Do not expose the provisioning script through an HTTP route. Agency administrator
+provisioning remains a trusted manual operation until Issue #4.
+
+### Manual authentication verification
+
+After applying the migration and provisioning test accounts:
+
+1. Sign in with invalid credentials and confirm the generic error remains on `/login`.
+2. Sign in as a platform administrator and verify `/dashboard` and `/agencies` work while `/users`
+   is denied.
+3. Sign in as an active agency administrator and verify `/dashboard` and `/users` work while
+   `/agencies` is denied.
+4. Confirm regular members, missing memberships, and soft-deleted agency administrators reach the
+   access-denied screen.
+5. Refresh a protected page to verify session continuity, then sign out and confirm protected routes
+   redirect to `/login`.
 
 ### Editor formatting
 
@@ -177,12 +259,12 @@ also sorts Tailwind CSS classes through `prettier-plugin-tailwindcss`.
 
 ## Mock-data limitations
 
-- No API, database, session, or persistence exists; refreshing resets all changes.
-- Demo sign-in accepts any values that pass client validation and does not establish an identity.
+- Authentication and route authorization are real, but agency and user CRUD remains in memory.
 - User creation assigns a demo agency name for display only.
 - Deactivation changes presentation state only and does not enforce access.
 - Loading, error, and empty UI states are implemented; repository substitution can exercise errors.
-- The UI does not query the Supabase schema yet and no login session is established.
+- Live authentication requires the Issue #3 migration and manually provisioned Auth users in the
+  target Supabase project.
 - Platform administrators must be provisioned through a trusted operational path; authenticated
   users cannot create or edit `platform_admins` records.
 - Membership creation assumes the target Auth user and profile already exist. Secure user
@@ -196,14 +278,14 @@ controls. Tenant context comes from authenticated identity, never a client-provi
 Secrets belong in ignored local environment files and managed deployment configuration, never
 source control.
 
-Issue #2 does not connect the browser to Supabase, implement authentication, or replace the mock
-repositories. Database policies must be validated locally before any remote migration is applied.
+Issue #3 connects only authentication and authorization. It does not replace the mock CRUD
+repositories or expose privileged database keys to normal application requests.
 
 ## Development roadmap
 
 - [x] Issue #1 — Application Shell & UI Design System
 - [x] Issue #2 — Database Schema & Tenant Isolation
-- [ ] Issue #3 — Authentication & RBAC
+- [x] Issue #3 — Authentication & RBAC
 - [ ] Issue #4 — Agency & User Management
 - [ ] Issue #5 — Security & Integration Testing
 - [ ] Issue #6 — UI Polish, Deployment & Documentation

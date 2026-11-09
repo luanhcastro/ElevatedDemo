@@ -57,3 +57,5 @@ All notable project changes are recorded by completed GitHub issue. This format 
 - Add component and end-to-end coverage when the testing strategy is introduced.
 
 ## Issue #2 — Implement Supabase database schema and tenant isolation
+
+## #3 — Implement Supabase authentication and role-based access control
