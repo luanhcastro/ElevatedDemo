@@ -84,6 +84,18 @@ These rules apply when backend integration is introduced:
 - Tenant isolation must be enforced at the database and application layers.
 - Test access using at least two separate agencies.
 
+## Database Migrations and RLS
+
+- Keep every database change in an ordered, version-controlled file under `supabase/migrations`.
+- Never edit an applied migration; add a new migration for subsequent changes.
+- Enable RLS explicitly on every application table in an exposed schema.
+- Keep privileged helper functions in a non-exposed schema, use `security definer` only when
+  necessary, set `search_path = ''`, and fully qualify referenced objects.
+- Revoke function privileges before granting the minimum required execution access.
+- Test RLS with authenticated and anonymous database roles rather than a service-role bypass.
+- Treat remote reset, migration repair, and destructive database commands as approval-required
+  operations.
+
 ## Testing and Validation
 
 For every issue:
