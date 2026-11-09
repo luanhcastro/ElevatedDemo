@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createUserSchema } from './schemas';
 import { SupabaseUserRepository } from './supabase-repository';
 import type { User } from './types';
+import { z } from 'zod';
+import { requirePlatformAdministrator } from '@/features/auth/authorization';
 
 type UserResult = { ok: true; user: User } | { ok: false; message: string };
 
@@ -22,6 +24,22 @@ async function getAuthorizedRepository() {
 
 export async function listAgencyUsers(): Promise<User[]> {
   return (await getAuthorizedRepository()).list();
+}
+
+export async function listAgencyUsersForPlatformAdministrator(agencyId: string): Promise<User[]> {
+  await requirePlatformAdministrator();
+  const id = z.string().uuid().safeParse(agencyId);
+  if (!id.success) throw new Error('Invalid agency.');
+
+  const userClient = await createClient();
+  const { data: agency, error } = await userClient
+    .from('agencies')
+    .select('name')
+    .eq('id', id.data)
+    .single();
+  if (error || !agency) throw new Error('Agency not found.');
+
+  return new SupabaseUserRepository(userClient, createAdminClient(), id.data, agency.name).list();
 }
 
 export async function createAgencyUser(input: unknown): Promise<UserResult> {

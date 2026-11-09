@@ -24,7 +24,7 @@ export function UserFormDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: CreateUserFormValues) => Promise<void>;
+  onSubmit: (values: CreateUserFormValues) => Promise<boolean>;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<CreateUserFormValues>({
@@ -38,8 +38,7 @@ export function UserFormDialog({
     }
   }, [form, open]);
   const submit = form.handleSubmit(async (values) => {
-    await onSubmit(values);
-    onOpenChange(false);
+    if (await onSubmit(values)) onOpenChange(false);
   });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,7 +55,6 @@ export function UserFormDialog({
             <Input
               id="user-name"
               autoComplete="name"
-              placeholder="Taylor Morgan"
               aria-invalid={Boolean(form.formState.errors.name)}
               {...form.register('name')}
             />
@@ -70,7 +68,6 @@ export function UserFormDialog({
               id="user-email"
               type="email"
               autoComplete="email"
-              placeholder="taylor@agency.example"
               aria-invalid={Boolean(form.formState.errors.email)}
               {...form.register('email')}
             />

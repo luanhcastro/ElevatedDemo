@@ -34,7 +34,7 @@ export default async function LoginPage() {
               A calmer way to manage your organization portfolio.
             </h1>
             <p className="mt-5 text-base leading-7 text-slate-400">
-              Explore a focused application shell designed for secure, multi-tenant operations.
+              Securely manage organizations and tenant-scoped users from one focused workspace.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -63,7 +63,7 @@ export default async function LoginPage() {
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Authentication by Supabase · Management data remains mocked
+          Authentication and tenant isolation powered by Supabase
         </p>
       </div>
     </main>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Building2, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/page-state';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +51,7 @@ export function AgenciesWorkspace() {
     const result = await createAgency(values);
     if (!result.ok) {
       toast({ title: 'Agency not created', description: result.message });
-      return;
+      return false;
     }
     const { agency } = result;
     setAgencies((current) => [agency, ...current]);
@@ -58,6 +59,7 @@ export function AgenciesWorkspace() {
       title: 'Agency created',
       description: `${agency.name} was added to the platform.`,
     });
+    return true;
   }
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -65,7 +67,7 @@ export function AgenciesWorkspace() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Agency directory</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create and maintain organizations in the demo platform.
+            Create and review organizations across the platform.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -115,6 +117,7 @@ export function AgenciesWorkspace() {
                 <TableHead>Agency</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="text-right">Users</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -142,6 +145,11 @@ export function AgenciesWorkspace() {
                       day: 'numeric',
                       year: 'numeric',
                     }).format(new Date(agency.createdAt))}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/agencies/${agency.id}/users`}>View users</Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -17,7 +17,7 @@ export function ErrorState({ onRetry }: { onRetry: () => void }) {
       </span>
       <h3 className="font-semibold">We couldn&apos;t load this data</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        The mock repository returned an error. Try loading it again.
+        The requested data could not be loaded. Try again.
       </p>
       <Button variant="outline" className="mt-4" onClick={onRetry}>
         Try again
