@@ -1,4 +1,3 @@
-
 # ElevatedDemo — Engineering Guidelines
 
 ## Project Overview
@@ -17,6 +16,8 @@ The project prioritizes security, maintainability, clean architecture, and engin
 - Zod
 - Supabase Auth
 - PostgreSQL with Row Level Security (RLS)
+- React Hook Form for accessible form state
+- Lucide React for interface icons
 
 Supabase integration will be introduced in later issues.
 
@@ -34,6 +35,9 @@ Supabase integration will be introduced in later issues.
 ## Code Quality
 
 - Use TypeScript strict mode.
+- Follow the repository Prettier configuration for all supported files.
+- Use consistent 2-space indentation.
+- Keep code readable and avoid unnecessary long lines.
 - Avoid `any` and unsafe type assertions.
 - Use descriptive names and small, focused functions.
 - Avoid duplicated business logic.
@@ -43,6 +47,7 @@ Supabase integration will be introduced in later issues.
 - Prefer readable code over clever solutions.
 - Add dependencies only when justified.
 - Do not modify unrelated code.
+- Do not introduce formatting exceptions without clear justification.
 
 ## UI Guidelines
 
@@ -84,28 +89,28 @@ These rules apply when backend integration is introduced:
 For every issue:
 
 1. Run relevant automated tests.
-2. Run TypeScript type checking.
-3. Run ESLint.
-4. Run the production build when applicable.
-5. Verify acceptance criteria.
-6. Review authorization and security implications.
-7. Report checks that could not be executed.
+2. Run `npm run format:check`.
+3. Run TypeScript type checking.
+4. Run ESLint.
+5. Run the production build when applicable.
+6. Verify acceptance criteria.
+7. Review authorization and security implications.
+8. Report checks that could not be executed.
 
 Never claim tests passed unless they were actually run.
-
 
 ## Documentation
 
 - Keep README.md updated with the current project state.
 - After completing each GitHub issue, append its number and title to CHANGELOG.md.
-- Keep CHANGELOG.md as a simple chronological list of completed tasks.
-- Do not add descriptions, technical details, or test results to the changelog.
+- Keep CHANGELOG.md chronological and preserve all previous issue entries.
+- Record only checks that were actually executed and their real outcomes.
 - Never mark an incomplete issue as completed.
-
 
 ## Git Workflow
 
 - Keep changes scoped to the current issue.
+- Format only files relevant to the current issue in future changes.
 - Do not commit or push unless explicitly requested.
 - Use clear, conventional commit messages when requested.
 - Never commit secrets or generated build artifacts.

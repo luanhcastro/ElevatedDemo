@@ -1,144 +1,108 @@
-
 # ElevatedDemo
 
-A secure, multi-tenant SaaS application for managing agencies and their users.
+ElevatedDemo is a polished application-shell demo for a future secure, multi-tenant agency management SaaS. Issue #1 establishes the visual system, responsive navigation, validation patterns, and replaceable data-access contracts without implementing a backend or claiming real authentication.
 
-Built with Next.js, TypeScript, and Supabase, with a focus on clean architecture, maintainability, and tenant isolation.
+## Technology stack
 
-## Overview
+- Next.js 15 App Router and React 19
+- TypeScript in strict mode
+- Tailwind CSS 3 and shadcn/ui conventions
+- Radix UI primitives and Lucide React icons
+- React Hook Form and Zod validation
+- In-memory asynchronous mock repositories
+- Supabase Auth and PostgreSQL with RLS are planned, not implemented
 
-ElevatedDemo is a technical demonstration project designed to showcase full-stack engineering practices.
+## Current functionality
 
-The application supports two administrative roles:
+- Responsive application shell with desktop sidebar, mobile navigation, page headers, active states, and a user-menu placeholder
+- Demo login with email/password validation, password visibility control, loading feedback, and explicit non-authentication messaging
+- Dashboard summary cards, recent activity, and mock workspace status
+- Agency and user directories with search, create, edit, deactivate, confirmation dialogs, loading/error/empty states, and toast feedback
+- Accessible labels, focus treatment, dialogs, menus, status text, and responsive tables
 
-- **Platform Administrator:** Manages agencies.
-- **Agency Administrator:** Manages users belonging to their agency.
-
-The MVP intentionally keeps the business domain simple to emphasize architecture, authentication, authorization, and security.
-
-## Technology Stack
-
-| Technology | Purpose |
-|---|---|
-| Next.js | Full-stack application framework |
-| TypeScript | Type safety |
-| Tailwind CSS | Styling |
-| shadcn/ui | UI components |
-| Zod | Input validation |
-| Supabase Auth | Authentication (planned) |
-| PostgreSQL | Database (planned) |
-| PostgreSQL RLS | Tenant isolation (planned) |
+All mutations exist only in memory and reset on reload. User passwords are validated in the browser and immediately discarded; they are not logged, stored, or transmitted.
 
 ## Architecture
 
-The application follows a feature-oriented modular monolith architecture.
+The application is a pragmatic, feature-oriented modular monolith. Routes and layouts compose features, reusable UI lives under `components`, feature-owned validation/types/contracts remain together, and mock implementations are isolated behind typed repositories.
 
-Main architectural principles:
+```text
+src/
+├── app/
+│   ├── (auth)/login/
+│   ├── (dashboard)/{dashboard,agencies,users}/
+│   ├── globals.css
+│   └── layout.tsx
+├── components/{layout,shared,ui}/
+├── features/
+│   ├── agencies/{components,repository.ts,schemas.ts,types.ts}
+│   ├── auth/{components,schemas.ts}
+│   ├── dashboard/components/
+│   └── users/{components,repository.ts,schemas.ts,types.ts}
+└── lib/mock/{data.ts,repositories.ts}
+```
 
-- Clear separation of concerns
-- Reusable UI components
-- Typed data access
-- Server-side authorization
-- Database-enforced tenant isolation
-- Minimal dependencies
+`AgencyRepository` and `UserRepository` define the UI-facing asynchronous contracts. A future Supabase implementation can replace the mock repositories without changing form and table behavior. No generic service layer or dependency-injection framework is introduced.
 
-## Project Structure
+## Prerequisites
 
-The project structure will be documented here after the initial application bootstrap.
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (current supported LTS version)
-- npm
+- Node.js 18.18 or newer (Node.js 20 LTS is recommended)
+- npm 9 or newer
 - Git
 
-### Installation
+## Installation and local development
 
 ```bash
 npm install
-```
-
-### Local Development
-
-```bash
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open [http://localhost:3000](http://localhost:3000). The root route redirects to `/dashboard`; `/login` demonstrates the planned entry experience. No environment variables are required for Issue #1.
 
-### Validation
+## Available scripts
 
-The available validation scripts will be documented after project initialization.
+| Command                | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `npm run dev`          | Start the local development server                           |
+| `npm run build`        | Create an optimized production build                         |
+| `npm run start`        | Serve the production build                                   |
+| `npm run format`       | Format supported repository files with Prettier              |
+| `npm run format:check` | Verify that supported files match the Prettier configuration |
+| `npm run lint`         | Run ESLint with zero warnings allowed                        |
+| `npm run typecheck`    | Run strict TypeScript checking without emitting files        |
 
-## Functional Scope
+Run the validation suite with `npm run format:check`, `npm run lint`, `npm run typecheck`, and
+`npm run build`. There is not yet an automated browser or unit-test suite; CRUD flows are
+structured for future component and integration coverage.
 
-### Platform Administrator
+### Editor formatting
 
-- Create agencies
-- List agencies
-- Update agency information
-- Deactivate agencies
+The repository includes shared VS Code settings that use the Prettier extension as the default
+formatter, format supported files on save, and apply ESLint fixes on save. Install the
+`esbenp.prettier-vscode` and `dbaeumer.vscode-eslint` extensions to use this automation. Prettier
+also sorts Tailwind CSS classes through `prettier-plugin-tailwindcss`.
 
-### Agency Administrator
+## Mock-data limitations
 
-- Create agency users
-- List agency users
-- Update user information
-- Deactivate agency users
+- No API, database, session, or persistence exists; refreshing resets all changes.
+- Demo sign-in accepts any values that pass client validation and does not establish an identity.
+- User creation assigns a demo agency name for display only.
+- Deactivation changes presentation state only and does not enforce access.
+- Loading, error, and empty UI states are implemented; repository substitution can exercise errors.
 
-## Data Model
+## Planned security approach
 
-### Agency
+Future backend issues will use Supabase Auth, server-side authorization, least-privilege access, and PostgreSQL Row Level Security. Tenant context must come from authenticated server-side identity, never a client-provided agency ID. Application tables will require RLS, cross-tenant tests with at least two agencies, and no privileged credentials in browser code. Secrets belong in ignored local environment files and managed deployment configuration, never source control.
 
-- ID
-- Name
-- Contact email
+None of those controls are represented as active in Issue #1.
 
-### User
+## Development roadmap
 
-- ID
-- Name
-- Email
-- Password (managed by Supabase Auth)
-
-Agency membership and role information will be stored separately.
-
-## Security Approach
-
-The planned implementation includes:
-
-- Supabase Auth
-- Role-Based Access Control
-- Server-side authorization
-- PostgreSQL Row Level Security
-- Tenant isolation
-- Secure administrative account provisioning
-
-Security features must not be described as implemented until they are verified.
-
-## Development Roadmap
-
-- [ ] Issue #1 — Application Shell & UI Design System
+- [x] Issue #1 — Application Shell & UI Design System
 - [ ] Issue #2 — Database Schema & Tenant Isolation
 - [ ] Issue #3 — Authentication & RBAC
 - [ ] Issue #4 — Agency & User Management
 - [ ] Issue #5 — Security & Integration Testing
 - [ ] Issue #6 — UI Polish, Deployment & Documentation
 
-## Current Limitations
-
-The first development phase uses mock data.
-
-Authentication, persistent data, and tenant isolation will be implemented in subsequent issues.
-
-## AI-Assisted Development
-
-OpenAI Codex is used to assist with implementation.
-
-Architectural decisions, security requirements, code review, and acceptance criteria remain subject to developer verification.
-
-## Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for implementation history, technical decisions, and validation results.
+For every future issue, update this README when behavior, setup, architecture, or requirements change and append an issue-specific entry to [CHANGELOG.md](./CHANGELOG.md). Never report a check as passing unless it was run.
