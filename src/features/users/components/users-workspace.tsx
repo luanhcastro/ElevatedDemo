@@ -26,8 +26,14 @@ import type { CreateUserFormValues } from '../schemas';
 import type { User } from '../types';
 import { UserFormDialog } from './user-form-dialog';
 
-export function UsersWorkspace({ viewedAgency }: { viewedAgency?: Agency }) {
-  const readOnly = Boolean(viewedAgency);
+export function UsersWorkspace({
+  viewedAgency,
+  readOnly: platformReadOnly = false,
+}: {
+  viewedAgency?: Agency;
+  readOnly?: boolean;
+}) {
+  const readOnly = platformReadOnly || Boolean(viewedAgency);
   const [users, setUsers] = useState<User[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [query, setQuery] = useState('');
@@ -79,7 +85,9 @@ export function UsersWorkspace({ viewedAgency }: { viewedAgency?: Agency }) {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {readOnly
-              ? 'Review users assigned to this agency.'
+              ? viewedAgency
+                ? 'Review users assigned to this agency.'
+                : 'Review users across all agencies.'
               : 'Manage users in your agency workspace.'}
           </p>
         </div>
@@ -115,7 +123,7 @@ export function UsersWorkspace({ viewedAgency }: { viewedAgency?: Agency }) {
               query
                 ? 'Try a different name, email, or agency.'
                 : readOnly
-                  ? 'No users are assigned to this agency.'
+                  ? 'No users are assigned to agencies in this directory.'
                   : 'Create the first user in this workspace.'
             }
             action={

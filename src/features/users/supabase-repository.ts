@@ -9,16 +9,17 @@ export class SupabaseUserRepository implements UserRepository {
   constructor(
     private readonly userClient: SupabaseClient<Database>,
     private readonly adminClient: SupabaseClient<Database>,
-    private readonly agencyId: string,
-    private readonly agencyName: string,
+    private readonly agencyId?: string,
+    private readonly agencyName?: string,
   ) {}
 
   async list(): Promise<User[]> {
-    const { data, error } = await this.userClient
+    const query = this.userClient
       .from('agency_memberships')
-      .select('user_id, role, created_at, profiles(name)')
-      .eq('agency_id', this.agencyId)
+      .select('user_id, role, created_at, profiles(name), agencies(name)')
       .order('created_at', { ascending: false });
+    if (this.agencyId) query.eq('agency_id', this.agencyId);
+    const { data, error } = await query;
     if (error) throw error;
 
     return Promise.all(
@@ -31,7 +32,7 @@ export class SupabaseUserRepository implements UserRepository {
           id: membership.user_id,
           name: membership.profiles.name,
           email: authData.user.email ?? 'Unknown email',
-          agencyName: this.agencyName,
+          agencyName: membership.agencies.name,
           role: membership.role === 'agency_admin' ? 'agency_admin' : 'member',
           status: 'active',
           createdAt: membership.created_at,
@@ -41,6 +42,9 @@ export class SupabaseUserRepository implements UserRepository {
   }
 
   async create(input: CreateUserInput): Promise<User> {
+    if (!this.agencyId || !this.agencyName) {
+      throw new Error('An agency is required to create users.');
+    }
     const { data: authData, error: authError } = await this.adminClient.auth.admin.createUser({
       email: input.email,
       password: input.password,

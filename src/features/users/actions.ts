@@ -1,6 +1,6 @@
 'use server';
 
-import { requireAgencyAdministrator } from '@/features/auth/authorization';
+import { requireAdministrator, requireAgencyAdministrator } from '@/features/auth/authorization';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { createUserSchema } from './schemas';
@@ -23,6 +23,10 @@ async function getAuthorizedRepository() {
 }
 
 export async function listAgencyUsers(): Promise<User[]> {
+  const context = await requireAdministrator();
+  if (context.role === 'platform_admin') {
+    return new SupabaseUserRepository(await createClient(), createAdminClient()).list();
+  }
   return (await getAuthorizedRepository()).list();
 }
 

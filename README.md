@@ -18,7 +18,8 @@ and tenant isolation enforced by Row Level Security (RLS).
 - Supabase email/password login, cookie-backed SSR sessions, logout, and protected routes
 - Role-aware navigation for platform and agency administrators
 - Real database dashboard counts with explicit unavailable states
-- Platform-admin agency listing, creation, and read-only agency user drill-down
+- Platform-admin agency listing, creation, and read-only user directory across all agencies
+- Read-only agency user drill-down for platform administrators
 - Agency-admin tenant user listing and secure Auth user provisioning
 - Loading, empty, success, validation, and error states
 - Responsive desktop and mobile application shell
@@ -61,7 +62,7 @@ attempts delete the newly created Auth user, whose foreign-key cascades remove l
   the public profile table. This keeps credentials and identity fields in Supabase Auth at the cost
   of an acceptable small-directory N+1 lookup.
 - Platform administrators can read profiles and memberships for dashboard counts and agency user
-  drill-down, but cannot mutate them through RLS. The drill-down is intentionally read-only.
+  drill-down, but cannot mutate them through RLS. The `/users` directory and agency drill-down are read-only for platform administrators.
 - Dashboard metrics query live data on each server render. No cache or analytics layer is added for
   the interview-sized dataset.
 - User creation spans Auth and PostgreSQL rather than a distributed transaction. Compensating Auth

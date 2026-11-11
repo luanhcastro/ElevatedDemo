@@ -22,11 +22,11 @@ describe('route authorization', () => {
     expect(decideRouteAccess('/users', null)).toBe('redirect-login');
   });
 
-  it('allows platform administrators only on platform routes', () => {
+  it('allows platform administrators to view all administrative routes', () => {
     const platformAdmin = context('platform_admin');
     expect(decideRouteAccess('/dashboard', platformAdmin)).toBe('allow');
     expect(decideRouteAccess('/agencies', platformAdmin)).toBe('allow');
-    expect(decideRouteAccess('/users', platformAdmin)).toBe('deny');
+    expect(decideRouteAccess('/users', platformAdmin)).toBe('allow');
   });
 
   it('allows agency administrators only on their agency routes', () => {
@@ -56,10 +56,10 @@ describe('route authorization', () => {
 });
 
 describe('role-aware navigation permissions', () => {
-  it('shows platform navigation without agency user management', () => {
+  it('shows the user directory in platform navigation', () => {
     expect(canAccessRoute('platform_admin', '/dashboard')).toBe(true);
     expect(canAccessRoute('platform_admin', '/agencies')).toBe(true);
-    expect(canAccessRoute('platform_admin', '/users')).toBe(false);
+    expect(canAccessRoute('platform_admin', '/users')).toBe(true);
   });
 
   it('shows agency navigation without platform agency management', () => {

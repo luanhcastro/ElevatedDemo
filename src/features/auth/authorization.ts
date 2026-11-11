@@ -87,6 +87,8 @@ export function requirePlatformAdministrator() {
   return requireRoute('/agencies');
 }
 
-export function requireAgencyAdministrator() {
-  return requireRoute('/users');
+export async function requireAgencyAdministrator() {
+  const context = await requireRoute('/users');
+  if (context.role !== 'agency_admin' || !context.agency) redirect('/access-denied');
+  return context;
 }

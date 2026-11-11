@@ -31,7 +31,7 @@ export function DashboardOverview({
           ? 'Users assigned across all agencies'
           : 'Users assigned to your agency',
       icon: UsersRound,
-      href: account.role === 'agency_admin' ? '/users' : undefined,
+      href: '/users',
       color: 'bg-violet-50 text-violet-600',
     },
   ];

@@ -65,3 +65,11 @@ All notable project changes are recorded by completed GitHub issue. This format 
 ## #5 — Final Fixes, Validation & Deployment
 
 ## #6 — Fix Sign Out Not Working
+
+## Fix — Platform administrator user directory access
+
+- Allow platform administrators to open `/users` from navigation and dashboard and read users across agencies, including each user's agency name.
+- Keep platform views read-only and enforce agency-only provisioning on the server.
+- Update route expectations and add repository, authorization, and two-agency SQL join regression coverage.
+- Validation: 20 Vitest tests passed; formatting, TypeScript, ESLint, and production build passed.
+- Database validation attempted with `npx --yes supabase@latest test db`; could not connect to the local stack at `127.0.0.1:54322` (connection refused). SQL regression remains unexecuted.

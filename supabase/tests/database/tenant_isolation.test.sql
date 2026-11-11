@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(35);
+select extensions.plan(36);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -58,6 +58,23 @@ select extensions.is(
   (select count(*) from public.agency_memberships),
   4::bigint,
   'platform administrators can view memberships across agencies'
+);
+
+select extensions.results_eq(
+  $$
+    select profiles.name, agencies.name
+    from public.agency_memberships as membership
+    join public.profiles on profiles.id = membership.user_id
+    join public.agencies on agencies.id = membership.agency_id
+    order by profiles.name
+  $$,
+  $$ values
+    ('Agency A Administrator'::text, 'Agency A'::text),
+    ('Agency A Member'::text, 'Agency A'::text),
+    ('Agency B Administrator'::text, 'Agency B'::text),
+    ('Agency B Member'::text, 'Agency B'::text)
+  $$,
+  'platform user directory joins profiles and agency names across two tenants'
 );
 
 select extensions.results_eq(

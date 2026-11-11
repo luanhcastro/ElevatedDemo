@@ -7,7 +7,7 @@ export function isAdministrator(role: AccountRole) {
 export function canAccessRoute(role: AccountRole, route: ProtectedRoute) {
   if (route === '/dashboard') return isAdministrator(role);
   if (route === '/agencies') return role === 'platform_admin';
-  return role === 'agency_admin';
+  return isAdministrator(role);
 }
 
 export function decideRouteAccess(
